@@ -1,76 +1,81 @@
 from pygame import*
-from random import randit
-import sys
+from random import randint
 
-img_back = "фон.png"
-img_hero = "корабель2.jpg"
-img_enemy = "корабель.jpg"
-img_enemy2 = "корабель3.jpg"
+
+img_back = "images/фон.png"
+img_hero = "images/корабель2.jpg"
+img_enemy = "images/корабель.jpg"
+img_enemy2 = "images/корабель3.jpg"
+
 
 win_width = 700
 win_height = 500
 
+
+display.set_caption("MorshuiBui")
 window = display.set_mode((win_width, win_height))
-display.set_caption("Maze")
-background = transform.scale(image.load("фон.png"),(win_width, win_height))
+background = transform.scale(image.load(img_back), (win_width, win_height))
 
 
-game = True
 finish = False
+run = True
+
 
 mixer.init()
-mixer.music.load('pushechnyiy-odinochnyiy-zalp.mp3')
-mixer.music.play(-1)
+# mixer.music.load('pushechnyiy-odinochnyiy-zalp.mp3')
+# mixer.music.play(-1)
+fire_sound = mixer.Sound("sounds/pushechnyiy-odinochnyiy-zalp.mp3")
 
 
+font.init()
+counter_font = font.Font(None, 36)
+
+score = 0
+coins = 0
+life = 5
 
 
+class GameSprite(sprite.Sprite):
+    def __init__(self, img, x, y, size_x, size_y, speed):
+        sprite.Sprite.__init__(self)
+        self.image = transform.scale(image.load(img), (size_x, size_y))
+        self.speed = speed
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def reset(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
 
 
+class Gun(GameSprite):
+    pass
+
+player_boat = GameSprite(img_hero, 100, win_height - 100, win_width - 200, 100, 0)
 
 
-while game:
+while run:
+
     for e in event.get():
         if e.type == QUIT:
-            game = False
+            run = False
 
-    window.blit(background, (0, 0))
 
-    display.update()
+    if not finish:
+        window.blit(background, (0, 0))
+
+        text_score = counter_font.render("Рахунок:" + str(score), 1, (255, 255, 255))
+        window.blit(text_score, (win_width - 100, 20))
+
+        text_life =  counter_font.render("Життя:" + str(life), 1, (255, 255, 255))
+        window.blit(text_life, (win_width - 100, 50))
+
+
+        player_boat.reset()
+
+        # monsters.update()
+        # monsters.draw(window)
+
+        display.update()
+
     time.delay(50)
-
-
-
-
-
-pygame.init()
-
-# Налаштування екрана
-screen = pygame.display.set_mode((600, 400))
-pygame.display.set_caption('Кнопка з малюнком в Pygame')
-
-# Кольори
-WHITE = (255, 255, 255)
-
-# Завантаження малюнка
-# Увага: помісти свій малюнок у ту ж папку і назви його 'button_image.png'
-button_image = pygame.image.load('button_image.png')
-button_size = 100
-button_image = pygame.transform.scale(button_image, (button_size, button_size))
-
-# Створення кнопки
-button_rect = pygame.Rect(250, 150, button_size, button_size)
-
-# Основний цикл
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if button_rect.collidepoint(event.pos):
-                print('Кнопка з малюнком натиснута!')
-
-    screen.fill(WHITE)
-    screen.blit(button_image, button_rect.topleft)
-    pygame.display.flip()
