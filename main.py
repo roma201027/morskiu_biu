@@ -3,7 +3,7 @@ from random import randint
 
 
 img_back = "images/фон.png"
-img_hero = "images/корабель2.jpg"
+img_hero = "images/корабель2-removebg-preview.png"
 img_enemy = "images/корабель.jpg"
 img_enemy2 = "images/корабель3.jpg"
 
@@ -22,8 +22,8 @@ run = True
 
 
 mixer.init()
-# mixer.music.load('pushechnyiy-odinochnyiy-zalp.mp3')
-# mixer.music.play(-1)
+mixer.music.load('sounds/there-be-pirates-the-quest-323338.mp3')
+mixer.music.play(-1)
 fire_sound = mixer.Sound("sounds/pushechnyiy-odinochnyiy-zalp.mp3")
 
 
@@ -59,23 +59,21 @@ while run:
     for e in event.get():
         if e.type == QUIT:
             run = False
-
+    window.blit(background, (0, 0))
+    player_boat.reset()
 
     if not finish:
-        window.blit(background, (0, 0))
-
-        text_score = counter_font.render("Рахунок:" + str(score), 1, (255, 255, 255))
-        window.blit(text_score, (win_width - 100, 20))
-
-        text_life =  counter_font.render("Життя:" + str(life), 1, (255, 255, 255))
-        window.blit(text_life, (win_width - 100, 50))
 
 
-        player_boat.reset()
+        text = counter_font.render("Рахунок:" + str(score), 1, (255, 255, 255))
+        window.blit(text, (10, 20))
 
-        # monsters.update()
-        # monsters.draw(window)
+        text_lose = counter_font.render("Життя:" + str(life), 1, (255, 255, 255))
+        window.blit(text_lose, (10, 50))
 
-        display.update()
+        text_coins = counter_font.render(f"Монети: {coins}", 1, (255, 255, 255))
+        window.blit(text_coins, (10, 80))
+
+    display.update()
 
     time.delay(50)
