@@ -5,12 +5,13 @@ from time import time as timer
 
 img_back = "images/фон.png"
 img_hero = "images/корабель2.png"
-img_enemy = "images/корабель.jpg"
-img_enemy2 = "images/корабель3.jpg"
+img_enemy = "images/корабель.png"
+img_enemy2 = "images/корабель3.png"
 img_cannonball = "images/ядро.png"
 img_gun = "images/гармата.png"
 img_torpedo = "images/торпеда.png"
-
+img_fire = "images/приціл.png"
+img_catch = "images/сітка.png"
 
 win_width = 700
 win_height = 500
@@ -23,6 +24,8 @@ background = transform.scale(image.load(img_back), (win_width, win_height))
 
 finish = False
 run = True
+mode = "fire"
+
 
 
 mixer.init()
@@ -47,6 +50,7 @@ cannonballs = sprite.Group()
 torpedos = sprite.Group()
 pirates = sprite.Group()
 kruisers = sprite.Group()
+snarads = sprite.Group()
 
 class GameSprite(sprite.Sprite):
     def __init__(self, img, x, y, size_x, size_y, speed):
@@ -77,7 +81,7 @@ class Gun(GameSprite):
         self.rect = self.image.get_rect(center=self.rect.center)
 
     def fire(self):
-        cannonball = Cannonball(img_cannonball, self.rect.centerx, self.rect.centery, 25, 30, 25)
+        cannonball = Cannonball(img_cannonball, self.rect.centerx, self.rect.centery, 25, 25, 20)
         cannonball.angle = self.angle
         cannonballs.add(cannonball)
         fire_sound.play()
@@ -107,24 +111,35 @@ class Torpedo(GameSprite):
             self.kill()
 
 class Enemy(GameSprite):
+    def __init__(self, img, x, y, size_x, size_y, speed):
+        super().__init__(img, x, y, size_x, size_y, speed)
+        self.shoot_time = timer()
+        self.is_moving = True
+
     def update(self):
-        if not self.rect.y > win_height // 3*2:
+        # Логіка руху залишається, оскільки ворог рухається до зіткнення
+        if not self.rect.centery > win_height // 2:
             self.rect.y += self.speed
+        else:
+            self.is_moving = False
+        self.fire()
 
     def fire(self):
-        pass
+        # Ворог стріляє, якщо не рухається і не був знищений
+        if not self.is_moving: # Немає потреби перевіряти is_hit, бо він одразу зникає
+            if timer() - self.shoot_time >= 5:
+                snarad = Torpedo(img_cannonball, self.rect.centerx, self.rect.centery, 15, 15, -10, self.rect.centerx)
+                snarads.add(snarad)
+                self.shoot_time = timer()
 
 
-
-
-
-
-
-class Button(GameSprite):
-    pass
+# class Button(GameSprite):
+#     pass
 
 
 player_boat = GameSprite(img_hero, 100, win_height - 100, win_width - 200, 100, 0)
+button_fire = GameSprite(img_fire, 30, win_height - 70, 50, 50, 0)
+button_catch = GameSprite(img_catch, win_width -80, win_height - 70, 50, 50, 0)
 gun_x = player_boat.rect.centerx
 gun_y = player_boat.rect.top
 player_gun = Gun(img_gun, gun_x, gun_y, 50, 100)
@@ -136,21 +151,37 @@ while run:
         if e.type == QUIT:
             run = False
         if e.type == MOUSEBUTTONDOWN:
-            if e.button == 1:
-                player_gun.fire()
-            elif e.button == 3:
-                mouse_x, mouse_y = mouse.get_pos()
-                torpedo = Torpedo(img_torpedo, mouse_x, win_height, 10, 25, 20, mouse_y)
-                torpedos.add(torpedo)
+            x, y = mouse.get_pos()
+            if button_fire.rect.collidepoint(x, y):
+                mode = "fire"
+            elif button_catch.rect.collidepoint(x, y):
+                mode = "catch"
+            elif mode == "fire":
+                if e.button == 1:
+                    player_gun.fire()
+                elif e.button == 3:
+                    mouse_x, mouse_y = mouse.get_pos()
+                    torpedo = Torpedo(img_torpedo, mouse_x, win_height, 10, 25, 20, mouse_y)
+                    torpedos.add(torpedo)
+            else:
+                pass
 
-    if timer() - enemies_start >= 1:
+    if timer() - enemies_start >= 2:
         if current_enemy == "pirate":
-            pirate = Enemy(img_enemy, randint(50, win_width - 100), -100, 50, 100, randint(1, 5))
-
+            pirate = Enemy(img_enemy2, randint(50, win_width - 100), -100, 50, 100, randint(1, 3))
+            current_enemy = "kruiser"
+            enemies_start = timer()
+            pirates.add(pirate)
+        elif current_enemy == "kruiser":
+            kruiser = Enemy(img_enemy, randint(50, win_width - 100), -100, 50, 100, randint(1, 3))
+            current_enemy = "pirate"
+            kruisers.add(kruiser)
+            enemies_start = timer()
     window.blit(background, (0, 0))
     player_boat.reset()
 
-
+    button_fire.reset()
+    button_catch.reset()
     if not finish:
 
         player_gun.update()
@@ -159,16 +190,34 @@ while run:
         player_gun.reset()
         torpedos.draw(window)
         torpedos.update()
+        snarads.draw(window)
+        snarads.update()
+        kruisers.update()
+        # kruisers.fire()
+        kruisers.draw(window)
+        pirates.update()
+        pirates.draw(window)
+        # pirates.fire()
 
-
-        text = counter_font.render("Рахунок:" + str(score), 1, (255, 255, 255))
+        text = counter_font.render("Рахунок:" + str(score), 1, (0, 0, 0))
         window.blit(text, (10, 20))
 
-        text_lose = counter_font.render("Життя:" + str(life), 1, (255, 255, 255))
+        text_lose = counter_font.render("Життя:" + str(life), 1, (0, 0, 0))
         window.blit(text_lose, (10, 50))
 
-        text_coins = counter_font.render(f"Монети: {coins}", 1, (255, 255, 255))
+        text_coins = counter_font.render(f"Монети: {coins}", 1, (0, 0, 0))
         window.blit(text_coins, (10, 80))
+
+
+        # Collision for pirates: now they disappear immediately
+        collides_pirates = sprite.groupcollide(pirates, cannonballs, True, True)
+        for p in collides_pirates:
+            score += 1
+
+        # Collision for kruisers: now they disappear immediately
+        collides_kruisers = sprite.groupcollide(kruisers, torpedos, True, True)
+        for k in collides_kruisers:
+            score += 1
 
     display.update()
 
